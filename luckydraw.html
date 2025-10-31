@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>응모</title>
+<style>
+  body {
+    font-family: "Noto Sans KR", sans-serif;
+    background: linear-gradient(135deg, #004aad, #007bff);
+    color: #fff;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .container {
+    background: rgba(255, 255, 255, 0.12);
+    padding: 28px;
+    border-radius: 16px;
+    width: 340px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  input {
+    width: 88%;
+    padding: 10px;
+    margin: 8px 0;
+    border-radius: 8px;
+    border: none;
+  }
+
+  /* ✅ 체크박스 구역만 왼쪽 정렬 */
+  .checkbox-wrapper {
+    width: 90%;
+    margin: 8px auto 10px auto;
+    text-align: left;
+  }
+
+  .notice-text {
+    font-size: 11px;
+    color: #fff;
+    margin-top: 8px;
+    margin-left: 4px; /* 체크박스 기준으로 자연스럽게 들여쓰기 */
+    line-height: 1.4;
+  }
+
+  .checkbox-wrapper label {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    font-size: 11px;
+    line-height: 1.4;
+    margin-bottom: 5px;
+  }
+
+  .checkbox-wrapper input[type="checkbox"] {
+    width: auto;
+    padding: 0;
+    margin: 0 6px 0 0;
+    transform: scale(1.1);
+  }
+
+  .checkbox-wrapper a {
+    color: #ffd700;
+    margin-left: 4px;
+    text-decoration: underline;
+  }
+
+  button {
+    padding: 12px 22px;
+    border-radius: 30px;
+    border: none;
+    background: #ffd700;
+    color: #004aad;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.25s;
+  }
+
+  .flash { animation: flash 0.9s ease; }
+  @keyframes flash {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.06); }
+    100% { transform: scale(1); }
+  }
+
+  #remaining {
+    font-weight: 700;
+    margin-top: 8px;
+  }
+
+  /* ✅ 로딩 스피너 스타일 */
+  .loading-overlay {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.6);
+    justify-content: center;
+    align-items: center;
+  }
+
+  .spinner {
+    border: 6px solid rgba(255,255,255,0.3);
+    border-top: 6px solid #ffd700;
+    border-radius: 50%;
+    width: 50px; height: 50px;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* 팝업 스타일 */
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 999;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.6);
+  }
+  .modal-content {
+    background-color: #fff;
+    color: #000;
+    font-size: 10px;
+    margin: 15% auto;
+    padding: 20px;
+    border-radius: 10px;
+    width: 80%;
+    max-width: 400px;
+    text-align: left;
+  }
+  .close {
+    color: #007bff;
+    float: right;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h2>주주우대 이용자</h2>
+  <h2>10만명 기념 이벤트🎁</h2>
+  <p>매일 매일 <u>3번씩</u> 응모 가능해요!</p>
+  <input id="name" placeholder="이름" />
+  <input id="phone" placeholder="휴대폰번호(- 제외하고 숫자만)" />
+
+  <!-- ✅ 체크박스 1 -->
+  <div class="checkbox-wrapper">
+    <label>
+      <input type="checkbox" id="agree1">
+      개인정보 수집 및 이용에 동의합니다.
+      <a href="#" id="viewDetail1">[내용보기]</a>
+    </label>
+
+    <!-- ✅ 체크박스 2 -->
+    <label>
+      <input type="checkbox" id="agree2">
+      개인정보 제3자 제공에 동의합니다.
+      <a href="#" id="viewDetail2">[내용보기]</a>
+    </label>
+
+    <!-- ✅ 안내 문구 추가 -->
+    <p class="notice-text">
+      * 경품 발송 시점까지 주주혜택 서비스 마케팅 동의 유지 필수(MY페이지에서 변경 가능)
+    </p>
+  </div>
+
+  <div>
+    <button id="applyBtn" onclick="submitForm()">응모하기</button>
+  </div>
+  <p id="remaining">남은 응모: -</p>
+  <p id="resultMsg"></p>
+</div>
+
+<!-- ✅ 로딩 스피너 -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+</div>
+
+<!-- ✅ 개인정보 수집 동의 팝업 -->
+<div id="privacyModal1" class="modal">
+  <div class="modal-content">
+    <span class="close" id="closeModal1">&times;</span>
+    <h3><b>개인정보 수집 및 이용 동의</b></h3>
+    <p>동의를 거부하실 수 있으나 이벤트 참여가 불가능합니다.</p>
+    <p><b>수집하는 개인정보 항목:</b> 이름, 연락처</p>
+    <p><b>수집 및 이용 목적:</b> 이벤트 진행 및 당첨자 안내</p>
+    <p><b>보유 및 이용 기간:</b> 당첨자 발표 후 1개월 보관</p>
+  </div>
+</div>
+
+<!-- ✅ 개인정보 제3자 제공 동의 팝업 -->
+<div id="privacyModal2" class="modal">
+  <div class="modal-content">
+    <span class="close" id="closeModal2">&times;</span>
+    <h3><b>개인정보 제3자 제공 동의</b></h3>
+    <p>동의를 거부하실 수 있으나 이벤트 참여가 불가능합니다.</p>
+    <p><b>제공받는 자:</b> GS엠비즈</p>
+    <p><b>제공 항목:</b> 이름, 연락처</p>
+    <p><b>제공 목적:</b> 이벤트 당첨자 안내 및 경품 발송</p>
+    <p><b>보유 및 이용 기간:</b> 당첨자 발표 후 1개월 보관</p>
+  </div>
+</div>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxeFBNxThXfvA6sxO9tHIfF6KH3ZYtzz6q-7j5Zz2hpfJeLJIrxXFaKP7DxDKC7W7W/exec";
+const MAX_TRIES = 3;
+const loader = document.getElementById("loadingOverlay");
+
+function getTodayKey() {
+  const now = new Date();
+  const tzOffset = 9 * 60 * 60000;
+  const todayKST = new Date(now.getTime() + tzOffset);
+  const yyyy = todayKST.getUTCFullYear();
+  const mm = String(todayKST.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(todayKST.getUTCDate()).padStart(2, '0');
+  return `tries_${yyyy}-${mm}-${dd}`;
+}
+
+function getTryCount() {
+  return parseInt(localStorage.getItem(getTodayKey()) || "0");
+}
+function setTryCount(count) {
+  localStorage.setItem(getTodayKey(), count);
+}
+function updateRemainingDisplay() {
+  const remaining = MAX_TRIES - getTryCount();
+  document.getElementById("remaining").innerText = `남은 응모: ${remaining}회`;
+}
+
+async function submitForm() {
+  const name = document.getElementById("name").value.trim();
+  const phone = document.getElementById("phone").value.trim();
+  const agree1 = document.getElementById("agree1").checked;
+  const agree2 = document.getElementById("agree2").checked;
+  const btn = document.getElementById("applyBtn");
+  const msg = document.getElementById("resultMsg");
+
+  if (!name || !phone) {
+    msg.innerText = "이름과 전화번호를 입력해주세요.";
+    return;
+  }
+
+  if (!agree1 || !agree2) {
+    msg.innerText = "개인정보 수집 및 이용, 제3자 제공에 모두 동의해 주세요.";
+    return;
+  }
+
+  const currentCount = getTryCount();
+  if (currentCount >= MAX_TRIES) {
+    msg.innerText = "오늘 응모 횟수를 초과했습니다. 내일 다시 응모하세요.";
+    return;
+  }
+
+  btn.classList.add('flash');
+  setTimeout(()=>btn.classList.remove('flash'),900);
+  
+  loader.style.display = "flex"; // ✅ 로딩 시작 표시
+
+  const payload = { name, phone, try_count: currentCount + 1, date: new Date().toISOString().split('T')[0] };
+
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json().catch(() => ({ status: 'error', message: '응답 파싱 실패' }));
+
+    if (data.status === "success") {
+      setTryCount(currentCount + 1);
+      msg.innerText = "정상 응모되었습니다! 🎉";
+    } else {
+      msg.innerText = "오류 발생: " + (data.message || "서버 오류");
+    }
+  } catch (err) {
+    console.error('fetch error', err);
+    msg.innerText = "서버 오류가 발생했습니다. 다시 시도해주세요.";
+  } finally {
+    loader.style.display = "none"; // ✅ 요청 종료 후 로딩 숨김
+  }
+
+  updateRemainingDisplay();
+}
+
+updateRemainingDisplay();
+
+// ✅ 팝업 기능 (1번)
+const modal1 = document.getElementById("privacyModal1");
+document.getElementById("viewDetail1").onclick = (e) => { e.preventDefault(); modal1.style.display = "block"; };
+document.getElementById("closeModal1").onclick = () => modal1.style.display = "none";
+
+// ✅ 팝업 기능 (2번)
+const modal2 = document.getElementById("privacyModal2");
+document.getElementById("viewDetail2").onclick = (e) => { e.preventDefault(); modal2.style.display = "block"; };
+document.getElementById("closeModal2").onclick = () => modal2.style.display = "none";
+
+// ✅ 팝업 바깥 클릭 시 닫기
+window.onclick = (e) => {
+  if (e.target === modal1) modal1.style.display = "none";
+  if (e.target === modal2) modal2.style.display = "none";
+};
+</script>
+</body>
+</html>
